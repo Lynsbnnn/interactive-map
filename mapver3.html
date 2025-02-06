@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Map</title>
+
+    <!-- Leaflet (for the interactive map) -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <style>
+        /* Fullscreen map */
+        #map { height: 100vh; }
+
+        /* Styled title */
+        .title {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 24px;
+            font-weight: bold;
+            color: white;
+            text-shadow: -2px -2px 0 #0150b7, 2px -2px 0 #0150b7, -2px 2px 0 #0150b7, 2px 2px 0 #0150b7;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 10px 20px;
+            border-radius: 8px;
+        }
+
+        /* Info box for displaying country names & flags */
+        .info-box {
+            position: absolute;
+            top: 60px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #dddddd;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.3);
+            font-size: 18px;
+            text-align: center;
+            color: #0150b7;
+            font-weight: bold;
+        }
+
+        /* Custom popup styling */
+        .leaflet-popup-content {
+            text-align: center;
+            font-size: 16px;
+        }
+        .flag {
+            width: 40px;
+            height: 25px;
+            margin: 5px;
+            border: 1px solid #000;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Map display area -->
+    <div id="map"></div>
+
+    <!-- Title -->
+    <div class="title">How to say different countries in French</div>
+
+    <!-- Info box to display selected country -->
+    <div class="info-box" id="info">Click a country to see its name in French</div>
+
+    <script>
+        // 1️⃣ Initialize the map centered on the world
+        var map = L.map('map').setView([30, 0], 2);
+
+        // 2️⃣ Add map tiles from OpenStreetMap
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(map);
+
+        // 3️⃣ List of countries with coordinates, translations, and flags
+        var countries = {
+            "CA": { name_en: "Canada", name_fr: "Canada", lat: 56.1304, lon: -106.3468, flag: "🇨🇦" },
+            "FR": { name_en: "France", name_fr: "France", lat: 46.603354, lon: 1.888334, flag: "🇫🇷" },
+            "US": { name_en: "United States", name_fr: "États-Unis", lat: 37.0902, lon: -95.7129, flag: "🇺🇸" },
+            "PT": { name_en: "Portugal", name_fr: "Portugal", lat: 39.3999, lon: -8.2245, flag: "🇵🇹" },
+            "GB": { name_en: "Great Britain", name_fr: "Grande-Bretagne", lat: 55.3781, lon: -3.4360, flag: "🇬🇧" },
+            "NL": { name_en: "Netherlands", name_fr: "Pays-Bas", lat: 52.1326, lon: 5.2913, flag: "🇳🇱" },
+            "WA": { name_en: "Wales", name_fr: "Pays de Galles", lat: 52.1307, lon: -3.7837, flag: "🏴󠁧󠁢󠁷󠁬󠁳󠁿" },
+            "EN": { name_en: "England", name_fr: "Angleterre", lat: 52.3555, lon: -1.1743, flag: "🏴󠁧󠁢󠁥󠁮󠁧󠁿" },
+            "SC": { name_en: "Scotland", name_fr: "Écosse", lat: 56.4907, lon: -4.2026, flag: "🏴󠁧󠁢󠁥󠁮󠁧󠁿" },
+            "IE": { name_en: "Ireland", name_fr: "Irlande", lat: 53.4129, lon: -8.2439, flag: "🇮🇪" },
+            "MA": { name_en: "Morocco", name_fr: "Maroc", lat: 31.7917, lon: -7.0926, flag: "🇲🇦" },
+            "ES": { name_en: "Spain", name_fr: "Espagne", lat: 40.4168, lon: -3.7038, flag: "🇪🇸" },
+            "JP": { name_en: "Japan", name_fr: "Japon", lat: 36.2048, lon: 138.2529, flag: "🇯🇵" },
+            "IT": { name_en: "Italy", name_fr: "Italie", lat: 41.8719, lon: 12.5674, flag: "🇮🇹" },
+            "DE": { name_en: "Germany", name_fr: "Allemagne", lat: 51.1657, lon: 10.4515, flag: "🇩🇪" },
+            "BE": { name_en: "Belgium", name_fr: "Belgique", lat: 50.8503, lon: 4.3517, flag: "🇧🇪" },
+            "CB": { name_en: "The Caribbean", name_fr: "Les Antilles", lat: 16.2650, lon: -61.5510, flag: "📍" },
+            "GR": { name_en: "Greece", name_fr: "Grèce", lat: 39.0742, lon: 21.8243, flag: "🇬🇷" },
+            "CN": { name_en: "China", name_fr: "Chine", lat: 35.8617, lon: 104.1954, flag: "🇨🇳" },
+            "DZ": { name_en: "Algeria", name_fr: "Algérie", lat: 28.0339, lon: 1.6596, flag: "🇩🇿" }
+        };
+
+        // 4️⃣ Add markers for each country
+        for (var code in countries) {
+            var country = countries[code];
+
+            L.marker([country.lat, country.lon])
+                .addTo(map)
+                .bindPopup(`
+                    <div style="text-align:center;">
+                        <p style="font-size: 22px;">${country.flag}</p>
+                        <p>🇫🇷 ${country.name_fr}</p>
+                        <p>🇬🇧 ${country.name_en}</p>
+                    </div>
+                `)
+                .on('click', function (e) {
+                    map.setView(e.latlng, 5);
+                    document.getElementById('info').innerHTML = `You clicked on <b>${this.getPopup().getContent()}</b>`;
+                });
+        }
+    </script>
+
+</body>
+</html>
